@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Result Viewer</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>Result Viewer</h1>
+
+  <div id="formContainer">
+    <form id="resultForm">
+      <label for="rollNo">Enter Roll Number:</label>
+      <input type="text" id="rollNo" name="rollNo" required>
+
+      <label for="examSelect">Select Exam:</label>
+      <select id="examSelect" name="examId" required>
+        <% exams.forEach((exam) => { %>
+          <option value="<%= exam.id %>"><%= exam.value %></option>
+        <% }); %>
+      </select>
+
+      <button type="button" onclick="fetchResults()">Get Result</button>
+    </form>
+
+    <div id="loading" style="display: none;">Loading...</div>
+
+    <div id="result" class="fade-in"></div>
+    
+    <button id="printButton" onclick="printResult()" style="display: none;">Print</button>
+  </div>
+
+  <div id="watermark">SKJ</div>
+
+  <script>
+    async function fetchResults() {
+      const rollNo = document.getElementById('rollNo').value;
+      const examId = document.getElementById('examSelect').value;
+
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('result').innerHTML = '';
+
+      try {
+        const response = await fetch(`/result/${examId}/${rollNo}`);
+        const resultHTML = await response.text();
+
+        document.getElementById('loading').style.display = 'none';
+
+        // Show results just below the form
+        document.getElementById('result').innerHTML = resultHTML;
+        document.getElementById('result').style.display = 'block';
+
+        // Show print button only if there is valid data
+        document.getElementById('printButton').style.display = resultHTML.trim() !== '' ? 'block' : 'none';
+      } catch (error) {
+        console.error(error);
+        document.getElementById('result').innerHTML = 'Error fetching result';
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    function printResult() {
+      const watermark = document.getElementById('watermark');
+      watermark.style.display = 'block';
+
+      const resultDiv = document.getElementById('result');
+      const originalContent = document.body.innerHTML;
+
+      // Only show the result div and watermark for printing
+      document.body.innerHTML = resultDiv.innerHTML + watermark.outerHTML;
+
+      window.print();
+
+      // Restore the original content and hide the watermark after printing
+      document.body.innerHTML = originalContent;
+      watermark.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
